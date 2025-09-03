@@ -1,0 +1,171 @@
+# AWS Configuration
+aws_region   = "eu-west-2"
+cluster_name = "eks-cluster"
+
+# ArgoCD Configuration
+argocd_namespace               = "argocd"
+argocd_chart_version          = "5.51.6"
+argocd_domain                 = "argocd.local"
+argocd_insecure               = true
+argocd_service_type           = "LoadBalancer"
+argocd_service_annotations    = {}
+argocd_ingress_enabled        = false
+argocd_ingress_annotations    = {}
+argocd_ingress_tls            = []
+argocd_applicationset_enabled = true
+
+# ArgoCD Apps Configuration (App of Apps pattern)
+argocd_apps_enabled      = false
+argocd_apps_chart_version = "1.6.2"
+argocd_apps_project      = "default"
+
+# ArgoCD Apps Source Configuration
+# argocd_apps_source = {
+#   repo_url        = "git@github.com:organization/argocd-apps.git"
+#   target_revision = "main"
+#   path            = "apps/"
+#   # Optional: Use Helm chart for apps
+#   helm = {
+#     release_name = "my-apps"
+#     value_files  = ["values-production.yaml"]
+#   }
+# }
+
+# ArgoCD Apps Destination
+# argocd_apps_destination = {
+#   server    = "https://kubernetes.default.svc"
+#   namespace = "argocd"
+# }
+
+# ArgoCD Apps Sync Policy
+# argocd_apps_sync_policy = {
+#   automated = {
+#     prune     = true
+#     self_heal = true
+#   }
+#   sync_options = ["CreateNamespace=true"]
+# }
+
+# SSH Key Configuration for Git Repositories
+# Provide a file path to the SSH private key
+# git_ssh_private_key_file = "~/.ssh/id_rsa"
+
+# SSH known hosts (optional, for additional security)
+# git_ssh_known_hosts = "github.com ssh-rsa AAAAB3NzaC1yc2EAAAABIwAAAQEAq2A7hRGmdnm9tUDbO9IDSwBK6TbQa+PXYPCPy6rbTrTtw7PHkccKrpp0yVhp5HdEIcKr6pLlVDBfOLX9QUsyCOV0wzfjIJNlGEYsdlLJizHhbn2mUjvSAHQqZETYP81eFzLQNnPHt4EVVUh7VfDESU84KezmD5QlWpXLmvU31/yMf+Se8xhHTvKSCZIFImWwoG6mbUoWf9nzpIoaSjB+weqqUUmpaaasXVal72J+UX2B+2RPW3RcT0eOzQgqlJL3RKrTJvdsjE3JEAvGq3lGHSZXy28G3skua2SmVi/w4yCE6gbODqnTWlg7+wC604ydGXA8VJiS5ap43JXiUFFAaQ=="
+
+# Git Repositories Configuration
+# git_repositories = [
+#   {
+#     name    = "my-app-repo"
+#     url     = "git@github.com:organization/my-app.git"
+#     type    = "git"
+#     project = "default"
+#     sshPrivateKeyFile = "~/.ssh/id_rsa"
+#   },
+#   {
+#     name    = "my-config-repo"
+#     url     = "git@github.com:organization/my-configs.git"
+#     type    = "git"
+#     project = "infrastructure"
+#     sshPrivateKeyFile = "~/.ssh/id_rsa"
+#   }
+# ]
+
+# ArgoCD Applications Configuration
+# argocd_applications = [
+#   # Example 1: Simple Kubernetes manifests
+#   {
+#     name      = "my-web-app"
+#     namespace = "default"
+#     project   = "default"
+#     source = {
+#       repo_url        = "git@github.com:organization/my-web-app.git"
+#       target_revision = "main"
+#       path            = "k8s/"
+#     }
+#     destination = {
+#       server    = "https://kubernetes.default.svc"
+#       namespace = "production"
+#     }
+#     sync_policy = {
+#       automated = {
+#         prune     = true
+#         self_heal = true
+#       }
+#       sync_options = ["CreateNamespace=true"]
+#     }
+#   },
+#   # Example 2: Helm chart
+#   {
+#     name      = "my-helm-app"
+#     namespace = "default"
+#     project   = "default"
+#     source = {
+#       repo_url        = "git@github.com:organization/my-helm-charts.git"
+#       target_revision = "v1.0.0"
+#       path            = "charts/my-app"
+#       helm = {
+#         release_name = "my-app"
+#         value_files  = ["values-prod.yaml"]
+#         values = <<-EOT
+#           replicaCount: 3
+#           image:
+#             tag: "v1.2.3"
+#           resources:
+#             requests:
+#               memory: "256Mi"
+#               cpu: "100m"
+#         EOT
+#         parameters = {
+#           "service.type" = "LoadBalancer"
+#           "ingress.enabled" = "true"
+#         }
+#       }
+#     }
+#     destination = {
+#       server    = "https://kubernetes.default.svc"
+#       namespace = "my-app"
+#     }
+#     sync_policy = {
+#       automated = {
+#         prune       = false
+#         self_heal   = true
+#         allow_empty = false
+#       }
+#       sync_options = ["CreateNamespace=true", "PrunePropagationPolicy=foreground"]
+#       retry = {
+#         limit = 5
+#         backoff = {
+#           duration     = "5s"
+#           factor       = 2
+#           max_duration = "3m"
+#         }
+#       }
+#     }
+#     ignore_differences = [
+#       {
+#         group = "apps"
+#         kind  = "Deployment"
+#         json_pointers = ["/spec/replicas"]
+#       }
+#     ]
+#   },
+#   # Example 3: Kustomize
+#   {
+#     name      = "my-kustomize-app"
+#     namespace = "default"
+#     project   = "default"
+#     source = {
+#       repo_url        = "git@github.com:organization/my-configs.git"
+#       target_revision = "HEAD"
+#       path            = "overlays/production"
+#     }
+#     destination = {
+#       server    = "https://kubernetes.default.svc"
+#       namespace = "kustomize-app"
+#     }
+#     sync_policy = {
+#       sync_options = ["CreateNamespace=true"]
+#     }
+#   }
+# ]

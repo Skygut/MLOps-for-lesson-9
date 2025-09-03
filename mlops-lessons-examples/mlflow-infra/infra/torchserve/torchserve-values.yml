@@ -1,0 +1,5 @@
+replicaCount: 1
+image:
+  repository: pytorch/torchserve
+  pullPolicy: IfNotPresent
+  tag: "0.12.0-cpu"

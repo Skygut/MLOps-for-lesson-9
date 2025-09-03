@@ -1,0 +1,24 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: mlflow
+  namespace: argocd
+spec:
+  project: default
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: mlflow
+  source:
+    repoURL: git@github.com:vilovgh/mlflow-infra.git
+    targetRevision: main
+    path: infra/mlflow/mlflow
+    helm:
+      releaseName: mlflow
+      valueFiles:
+        - ../mlops-values.yaml
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true

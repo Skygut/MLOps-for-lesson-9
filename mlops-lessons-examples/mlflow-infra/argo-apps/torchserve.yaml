@@ -1,0 +1,42 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: torchserve
+  namespace: argocd
+spec:
+  destination:
+    namespace: ml-inference
+    server: https://kubernetes.default.svc
+  project: cluster-addons
+  source:
+    repoURL: https://pytorch.github.io/serve/
+    chart: torchserve
+    targetRevision: 0.2.0
+    helm:
+      valuesObject:
+        image:
+          repository: pytorch/torchserve
+          tag: 0.8.2
+        modelStore:
+          models:
+            densenet161.mar:
+              url: https://torchserve.pytorch.org/mar_files/densenet161.mar
+        ingress:
+          enabled: false
+        metrics:
+          enabled: true
+        serviceMonitor:
+          enabled: true
+          additionalLabels:
+            release: prometheus-operator
+        resources:
+          limits:
+            cpu: 500m
+            memory: 1Gi
+          requests:
+            cpu: 200m
+            memory: 512Mi
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true

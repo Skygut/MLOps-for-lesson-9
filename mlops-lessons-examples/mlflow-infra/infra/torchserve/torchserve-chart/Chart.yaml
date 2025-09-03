@@ -1,0 +1,22 @@
+apiVersion: v2
+name: torchserve
+description: A Helm chart for TorchServe - PyTorch model serving framework
+type: application
+version: 0.1.0
+appVersion: "0.12.0"
+home: https://pytorch.org/serve/
+icon: https://pytorch.org/assets/images/pytorch-logo.png
+keywords:
+  - torchserve
+  - pytorch
+  - machine-learning
+  - model-serving
+  - inference
+maintainers:
+  - name: MLOps Team
+sources:
+  - https://github.com/pytorch/serve
+  - https://hub.docker.com/r/pytorch/torchserve
+annotations:
+  category: MachineLearning
+  licenses: Apache-2.0

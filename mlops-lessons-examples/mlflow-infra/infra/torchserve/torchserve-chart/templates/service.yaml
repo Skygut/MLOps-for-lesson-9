@@ -1,0 +1,23 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "torchserve.fullname" . }}
+  labels:
+    {{- include "torchserve.labels" . | nindent 4 }}
+spec:
+  type: {{ .Values.service.type }}
+  ports:
+    - port: {{ .Values.service.inference.port }}
+      targetPort: {{ .Values.service.inference.targetPort }}
+      protocol: TCP
+      name: inference
+    - port: {{ .Values.service.management.port }}
+      targetPort: {{ .Values.service.management.targetPort }}
+      protocol: TCP
+      name: management
+    - port: {{ .Values.service.metrics.port }}
+      targetPort: {{ .Values.service.metrics.targetPort }}
+      protocol: TCP
+      name: metrics
+  selector:
+    {{- include "torchserve.selectorLabels" . | nindent 4 }}

@@ -1,0 +1,253 @@
+# Default values for torchserve.
+# This is a YAML-formatted file.
+# Declare variables to be passed into your templates.
+
+replicaCount: 1
+
+image:
+  repository: pytorch/torchserve
+  pullPolicy: IfNotPresent
+  # Overrides the image tag whose default is the chart appVersion.
+  tag: "0.12.0"
+
+imagePullSecrets: []
+nameOverride: ""
+fullnameOverride: ""
+
+labels:
+  release: monitoring
+serviceAccount:
+  # Specifies whether a service account should be created
+  create: true
+  # Annotations to add to the service account
+  annotations: {}
+  # The name of the service account to use.
+  # If not set and create is true, a name is generated using the fullname template
+  name: ""
+
+podAnnotations: {}
+
+podSecurityContext:
+  fsGroup: 1000
+  runAsNonRoot: true
+  runAsUser: 1000
+
+securityContext:
+  allowPrivilegeEscalation: true
+  capabilities:
+    drop:
+    - ALL
+  readOnlyRootFilesystem: false
+  runAsNonRoot: true
+  runAsUser: 1000
+
+torchserve:
+  # TorchServe configuration
+  config:
+    # Management API port
+    managementPort: 8081
+    # Inference API port
+    inferencePort: 8080
+    # Metrics API port
+    metricsPort: 8082
+    # gRPC inference port
+    grpcInferencePort: 7070
+    # gRPC management port
+    grpcManagementPort: 7071
+    
+    # Model store configuration
+    # modelStore: "/home/model-server/model-store"
+    modelStore: "/home/model-server/model-store"
+    
+    # Worker configuration
+    defaultWorkersPerModel: 1
+    maxWorkers: 4
+    batchSize: 1
+    maxBatchDelay: 100
+    
+    # Logging configuration
+    logLevel: "INFO"
+    logConfig: ""
+    # Logging is configured to output to stdout for Kubernetes log collection
+    enableFileLogging: false
+    
+    # Enable model versioning
+    enableModelVersioning: false
+    
+    # Workflow store
+    workflowStore: "/home/model-server/wf-store"
+    
+    # Performance tuning (new in 0.12.0+)
+    numberOfNettyThreads: 4
+    jobQueueSize: 100
+    asyncLogging: true
+    installPyDepPerModel: false
+    enableEnvvarsConfig: true
+    disableTokenAuthorization: true
+    
+    # Additional torchserve configuration properties
+    additionalConfig: |
+      enable_model_api=true
+      metrics_enabled=true
+      enable_metrics_api=true
+      metrics_mode=prometheus
+      
+  # Model configuration
+  models:
+    densenet161:
+      url: "https://torchserve.pytorch.org/mar_files/densenet161.mar"
+      initialWorkers: 1
+      batchSize: 1
+      maxBatchDelay: 100
+      responseTimeout: 120
+
+  # Workflows configuration
+  workflows: {}
+    # Example workflow configuration
+    # my_workflow:
+    #   url: "path/to/workflow.war"
+
+service:
+  type: ClusterIP
+  inference:
+    port: 8080
+    targetPort: 8080
+  management:
+    port: 8081
+    targetPort: 8081
+  metrics:
+    port: 8082
+    targetPort: 8082
+
+ingress:
+  enabled: false
+  className: ""
+  annotations: {}
+    # kubernetes.io/ingress.class: nginx
+    # kubernetes.io/tls-acme: "true"
+  hosts:
+    - host: torchserve.local
+      paths:
+        - path: /
+          pathType: Prefix
+          service: inference
+        - path: /management
+          pathType: Prefix
+          service: management
+  tls: []
+  #  - secretName: torchserve-tls
+  #    hosts:
+  #      - torchserve.local
+
+resources:
+  limits:
+    cpu: 500m
+    memory: 1Gi
+  requests:
+    cpu: 200m
+    memory: 512Mi
+
+autoscaling:
+  enabled: false
+  minReplicas: 1
+  maxReplicas: 100
+  targetCPUUtilizationPercentage: 80
+  # targetMemoryUtilizationPercentage: 80
+
+nodeSelector: {}
+
+tolerations: []
+
+affinity: {}
+
+# Persistence for model store
+persistence:
+  enabled: false
+  storageClass: ""
+  accessMode: ReadWriteOnce
+  size: 8Gi
+  mountPath: /home/model-server/model-store
+  annotations: {}
+
+# Persistence for workflow store
+workflowPersistence:
+  enabled: false
+  storageClass: ""
+  accessMode: ReadWriteOnce
+  size: 2Gi
+  mountPath: /home/model-server/wf-store
+  annotations: {}
+
+# Health checks
+livenessProbe:
+  enabled: true
+  httpGet:
+    path: /ping
+    port: inference
+  initialDelaySeconds: 30
+  periodSeconds: 10
+  timeoutSeconds: 5
+  successThreshold: 1
+  failureThreshold: 3
+
+readinessProbe:
+  enabled: true
+  httpGet:
+    path: /ping
+    port: inference
+  initialDelaySeconds: 15
+  periodSeconds: 5
+  timeoutSeconds: 3
+  successThreshold: 1
+  failureThreshold: 3
+
+# Metrics and monitoring
+metrics:
+  enabled: true
+  serviceMonitor:
+    enabled: true
+    namespace: ""
+    interval: 10s
+    scrapeTimeout: 10s
+    labels:
+      release: monitoring
+    annotations: {}
+
+# Pod Disruption Budget
+podDisruptionBudget:
+  enabled: false
+  minAvailable: 1
+  # maxUnavailable: 1
+
+# Environment variables
+env: []
+  # - name: JAVA_OPTS
+  #   value: "-Xmx1g"
+
+# Init containers
+initContainers: []
+
+# Sidecar containers
+sidecars: []
+
+# Extra volumes
+extraVolumes: []
+
+# Extra volume mounts
+extraVolumeMounts: []
+
+# ConfigMap for TorchServe configuration
+configMap:
+  create: true
+  data: {}
+
+# Secret for sensitive configuration
+secret:
+  create: false
+  data: {}
+
+# Network policy
+networkPolicy:
+  enabled: false
+  ingress: []
+  egress: []

@@ -1,0 +1,6 @@
+FROM alpine:latest
+WORKDIR /app
+COPY mlops-entrypoint-cmd.sh .
+RUN chmod +x mlops-entrypoint-cmd.sh
+ENTRYPOINT ["./mlops-entrypoint-cmd.sh"]
+CMD ["hello", "from", "CMD"]

@@ -1,0 +1,34 @@
+# Copy this file to terraform.tfvars and update the values for your deployment
+
+# Project Configuration
+project_name = "mlops-lessons"
+region       = "us-west-2"
+
+# S3 Bucket Configuration
+bucket_name    = "mlops-lessons-tf-state-unique-suffix"  # Must be globally unique
+force_destroy  = true
+
+# VPC Configuration
+vpc_cidr             = "10.0.0.0/16"
+availability_zones   = ["us-west-2a", "us-west-2b"]
+public_subnet_cidrs  = ["10.0.1.0/24", "10.0.2.0/24"]
+private_subnet_cidrs = ["10.0.10.0/24", "10.0.20.0/24"]
+enable_nat_gateway   = false  # Set to true if you need private subnet internet access (additional charges)
+allowed_ssh_cidr     = "0.0.0.0/0"  # Restrict this to your IP for better security
+
+# EC2 Instance Configuration (commented out since compute resources are disabled)
+# instance_type     = "t2.micro"  # Free tier eligible
+# instance_ami      = "ami-0c02fb55956c7d316"  # Amazon Linux 2 in us-west-2
+# root_volume_size  = 8
+# create_eip        = false  # Set to true if you need a static IP (additional charges apply)
+
+# SSH Key Configuration (commented out since compute resources are disabled)
+# Generate a key pair first: ssh-keygen -t rsa -b 2048 -f ~/.ssh/mlops-lessons
+# public_key = "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQC... your-public-key-here"
+
+# Tags
+tags = {
+  Environment = "Dev"
+  Project     = "MLOps Lessons"
+  Owner       = "Your Name"
+}

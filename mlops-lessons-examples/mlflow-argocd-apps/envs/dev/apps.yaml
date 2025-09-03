@@ -1,0 +1,27 @@
+applications:
+  argocd-apps:
+    namespace: argocd
+    project: default
+    additionalAnnotations:
+      argocd.argoproj.io/sync-wave: "-5"
+    finalizers:
+      - resources-finalizer.argocd.argoproj.io
+    sources:
+      - repoURL: https://argoproj.github.io/argo-helm
+        chart: argocd-apps
+        targetRevision: 2.0.2
+        helm:
+          valueFiles:
+          - $values/envs/dev/apps.yaml
+          - $values/envs/dev/ghost.yaml
+      - repoURL: git@github.com:vilovgh/mlflow-argocd-apps.git
+        targetRevision: HEAD
+        ref: values
+    destination:
+      server: https://kubernetes.default.svc
+      namespace: argocd
+    syncPolicy:
+      automated:
+        prune: true
+        selfHeal: true
+ 

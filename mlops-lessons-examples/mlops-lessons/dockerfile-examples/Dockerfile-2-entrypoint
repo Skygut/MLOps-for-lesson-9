@@ -1,0 +1,6 @@
+# Dockerfile для прикладу ENTRYPOINT
+FROM alpine:latest
+WORKDIR /app
+COPY mlops-entrypoint.sh .
+RUN chmod +x mlops-entrypoint.sh
+ENTRYPOINT ["./mlops-entrypoint.sh"]

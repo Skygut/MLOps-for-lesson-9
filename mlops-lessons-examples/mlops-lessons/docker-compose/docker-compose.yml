@@ -1,0 +1,31 @@
+services:
+  # Сервіс для нашого ML API
+  ml_api:
+    build: ./api # Вказуємо Docker Compose, що образ для цього сервісу потрібно побудувати з Dockerfile у папці ./api
+    ports:
+      - "8000:8000" # Мапуємо порт 8000 хоста до порту 8000 контейнера ml_api
+    depends_on:
+      - db # Вказуємо, що ml_api залежить від сервісу 'db'. Compose спочатку запустить 'db'.
+    environment: # Змінні середовища для контейнера ml_api
+      DB_HOST: db # Ім'я хоста для підключення до БД (ім'я сервісу 'db')
+      DB_NAME: predictions_db
+      DB_USER: user
+      DB_PASSWORD: password
+    restart: on-failure # Перезапускати контейнер, якщо він зупинився з помилкою
+
+  # Сервіс для бази даних PostgreSQL
+  db:
+    image: postgres:13-alpine # Використовуємо офіційний образ PostgreSQL
+    environment: # Змінні середовища для налаштування PostgreSQL
+      POSTGRES_DB: predictions_db
+      POSTGRES_USER: user
+      POSTGRES_PASSWORD: password
+    volumes:
+      - db_data:/var/lib/postgresql/data # Постійне сховище для даних БД
+      - ./init_db.sql:/docker-entrypoint-initdb.d/init_db.sql # Виконати SQL-скрипт при першому запуску
+    ports:
+      - "5432:5432" # (Необов'язково) Якщо ви хочете підключатися до БД з хоста
+
+# Визначаємо іменовані томи для постійного зберігання даних БД
+volumes:
+  db_data:

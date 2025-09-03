@@ -1,0 +1,181 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "torchserve.fullname" . }}
+  labels:
+    {{- include "torchserve.labels" . | nindent 4 }}
+spec:
+  {{- if not .Values.autoscaling.enabled }}
+  replicas: {{ .Values.replicaCount }}
+  {{- end }}
+  # strategy:
+  #   type: Recreate
+  selector:
+    matchLabels:
+      {{- include "torchserve.selectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+      annotations:
+        checksum/config: {{ include (print $.Template.BasePath "/configmap.yaml") . | sha256sum }}
+        {{- with .Values.podAnnotations }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
+      labels:
+        {{- include "torchserve.selectorLabels" . | nindent 8 }}
+    spec:
+      {{- with .Values.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      serviceAccountName: {{ include "torchserve.serviceAccountName" . }}
+      securityContext:
+        {{- toYaml .Values.podSecurityContext | nindent 8 }}
+      {{- with .Values.initContainers }}
+      initContainers:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      containers:
+        - name: {{ .Chart.Name }}
+          securityContext:
+            {{- toYaml .Values.securityContext | nindent 12 }}
+          image: {{ include "torchserve.image" . }}
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          command:
+            - "torchserve"
+          args:
+            - "--start"
+            - "--model-store={{ .Values.torchserve.config.modelStore }}"
+            - "--ts-config=/opt/torchserve/conf/config.properties"
+            {{- if .Values.torchserve.workflows }}
+            - "--workflow-store={{ .Values.torchserve.config.workflowStore }}"
+            {{- end }}
+            {{- if .Values.torchserve.models }}
+            {{- range $name, $config := .Values.torchserve.models }}
+            {{- if $config.url }}
+            - "--models={{ $name }}={{ $config.url }}"
+            {{- else }}
+            - "--models={{ $name }}"
+            {{- end }}
+            {{- end }}
+            {{- else }}
+            - "--models=all"
+            {{- end }}
+            - "--foreground"
+          ports:
+            - name: inference
+              containerPort: {{ .Values.torchserve.config.inferencePort }}
+              protocol: TCP
+            - name: management
+              containerPort: {{ .Values.torchserve.config.managementPort }}
+              protocol: TCP
+            - name: metrics
+              containerPort: {{ .Values.torchserve.config.metricsPort }}
+              protocol: TCP
+            - name: grpc-inference
+              containerPort: {{ .Values.torchserve.config.grpcInferencePort }}
+              protocol: TCP
+            - name: grpc-mgmt
+              containerPort: {{ .Values.torchserve.config.grpcManagementPort }}
+              protocol: TCP
+          {{- if .Values.livenessProbe.enabled }}
+          livenessProbe:
+            httpGet:
+              path: {{ .Values.livenessProbe.httpGet.path }}
+              port: {{ .Values.livenessProbe.httpGet.port }}
+            initialDelaySeconds: {{ .Values.livenessProbe.initialDelaySeconds }}
+            periodSeconds: {{ .Values.livenessProbe.periodSeconds }}
+            timeoutSeconds: {{ .Values.livenessProbe.timeoutSeconds }}
+            successThreshold: {{ .Values.livenessProbe.successThreshold }}
+            failureThreshold: {{ .Values.livenessProbe.failureThreshold }}
+          {{- end }}
+          {{- if .Values.readinessProbe.enabled }}
+          readinessProbe:
+            httpGet:
+              path: {{ .Values.readinessProbe.httpGet.path }}
+              port: {{ .Values.readinessProbe.httpGet.port }}
+            initialDelaySeconds: {{ .Values.readinessProbe.initialDelaySeconds }}
+            periodSeconds: {{ .Values.readinessProbe.periodSeconds }}
+            timeoutSeconds: {{ .Values.readinessProbe.timeoutSeconds }}
+            successThreshold: {{ .Values.readinessProbe.successThreshold }}
+            failureThreshold: {{ .Values.readinessProbe.failureThreshold }}
+          {{- end }}
+          resources:
+            {{- toYaml .Values.resources | nindent 12 }}
+          env:
+            - name: TS_CONFIG_FILE
+              value: "/opt/torchserve/conf/config.properties"
+            - name: LOG_LOCATION
+              value: ""
+            - name: METRICS_LOCATION
+              value: ""
+            - name: TS_LOG_STDOUT
+              value: "true"
+            {{- with .Values.env }}
+            {{- toYaml . | nindent 12 }}
+            {{- end }}
+          volumeMounts:
+            {{- if .Values.configMap.create }}
+            - name: config
+              mountPath: /opt/torchserve/conf
+              readOnly: true
+            {{- end }}
+            {{- if .Values.persistence.enabled }}
+            - name: model-store
+              mountPath: {{ .Values.persistence.mountPath }}
+            {{- end }}
+            {{- if .Values.workflowPersistence.enabled }}
+            - name: workflow-store
+              mountPath: {{ .Values.workflowPersistence.mountPath }}
+            {{- end }}
+            {{- with .Values.extraVolumeMounts }}
+            {{- toYaml . | nindent 12 }}
+            {{- end }}
+        {{- with .Values.sidecars }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
+      volumes:
+        {{- if .Values.configMap.create }}
+        - name: config
+          configMap:
+            name: {{ include "torchserve.configMapName" . }}
+        {{- end }}
+        {{- if .Values.secret.create }}
+        - name: secret
+          secret:
+            secretName: {{ include "torchserve.secretName" . }}
+        {{- end }}
+        {{- if .Values.persistence.enabled }}
+        - name: model-store
+          {{- if .Values.persistence.existingClaim }}
+          persistentVolumeClaim:
+            claimName: {{ .Values.persistence.existingClaim }}
+          {{- else }}
+          persistentVolumeClaim:
+            claimName: {{ include "torchserve.modelStorePvcName" . }}
+          {{- end }}
+        {{- end }}
+        {{- if .Values.workflowPersistence.enabled }}
+        - name: workflow-store
+          {{- if .Values.workflowPersistence.existingClaim }}
+          persistentVolumeClaim:
+            claimName: {{ .Values.workflowPersistence.existingClaim }}
+          {{- else }}
+          persistentVolumeClaim:
+            claimName: {{ include "torchserve.workflowStorePvcName" . }}
+          {{- end }}
+        {{- end }}
+        {{- with .Values.extraVolumes }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
+      {{- with .Values.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}

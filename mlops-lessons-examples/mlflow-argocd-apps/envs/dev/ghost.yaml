@@ -1,0 +1,32 @@
+applications:
+  ghost:
+    namespace: argocd
+    project: default
+    additionalAnnotations:
+      argocd.argoproj.io/sync-wave: "-4"
+    finalizers:
+      - resources-finalizer.argocd.argoproj.io
+    sources:
+      - repoURL: https://charts.bitnami.com/bitnami
+        # repoURL: oci://registry-1.docker.io/bitnamicharts
+        chart: ghost
+        targetRevision: 25.0.4
+        helm:
+          values: |
+            service:
+              type: LoadBalancer
+            ghostUsername: user
+            ghostPassword: password123
+            ghostEmail: user@example.com
+            ghostBlogTitle: "My Ghost Blog"
+            persistence:
+              enabled: false
+    destination:
+      server: https://kubernetes.default.svc
+      namespace: ghost
+    syncPolicy:
+      automated:
+        prune: true
+        selfHeal: true
+      syncOptions:
+        - CreateNamespace=true

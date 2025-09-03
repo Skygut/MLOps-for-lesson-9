@@ -1,0 +1,18 @@
+{{- if .Values.configMap.create }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "torchserve.configMapName" . }}
+  labels:
+    {{- include "torchserve.labels" . | nindent 4 }}
+data:
+  config.properties: |
+    {{- include "torchserve.config" . | nindent 4 }}
+  {{- if .Values.torchserve.models }}
+  model_config.yaml: |
+    {{- include "torchserve.modelConfig" . | nindent 4 }}
+  {{- end }}
+  {{- with .Values.configMap.data }}
+  {{- toYaml . | nindent 2 }}
+  {{- end }}
+{{- end }}

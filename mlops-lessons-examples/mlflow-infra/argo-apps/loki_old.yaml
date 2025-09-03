@@ -1,0 +1,32 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: loki
+  namespace: argocd
+spec:
+  destination:
+    namespace: infra-tools
+    server: "https://kubernetes.default.svc"
+  project: cluster-addons
+  source:
+    repoURL: https://grafana.github.io/helm-charts
+    chart: loki
+    targetRevision: 5.41.3
+    helm:
+      values: |
+        loki:
+          tolerations:
+            - key: usage
+              operator: Equal
+              value: infrastructure
+              effect: NoSchedule
+          config:
+            table_manager:
+              retention_deletes_enabled: true
+              retention_period: 72h
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true

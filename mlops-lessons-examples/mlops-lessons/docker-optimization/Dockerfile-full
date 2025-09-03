@@ -1,0 +1,22 @@
+FROM ubuntu:24.04
+
+# Set environment variables to avoid interactive prompts during package installation
+ENV DEBIAN_FRONTEND=noninteractive
+
+# Update and install basic packages
+RUN apt-get update
+RUN apt-get install -y ca-certificates \
+        curl \
+        wget \
+        git \
+        vim \
+        nano \
+        python3 \
+        python3-pip \
+        build-essential 
+
+# Set working directory
+WORKDIR /workspace
+
+# Default command
+CMD ["/bin/bash"]

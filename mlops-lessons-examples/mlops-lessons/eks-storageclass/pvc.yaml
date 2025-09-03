@@ -1,0 +1,11 @@
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: test-pvc
+spec:
+  accessModes:
+    - ReadWriteOnce
+  storageClassName: ebs-sc-gp3 # This should match your EKS cluster's StorageClass
+  resources:
+    requests:
+      storage: 10Gi
